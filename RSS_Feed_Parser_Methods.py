@@ -2,7 +2,7 @@ import feedparser
 import pprint
 
 def getlinks():
-    f = open(r'C:\Users\combsjc1\Documents\Python Scripts\rsslinks.txt')
+    f = open(r'rsslinks.txt')
     links = {}
     for line in f.readlines():
         lline = line.split(',')
@@ -73,6 +73,17 @@ def filter(outputdict, category, searchterms):
         for term in searchterms:
             if term in article['text']:
                 newitems.append(article)
+    return newitems
+
+def outputintoHTTP(outputdict, category, searchterms):
+    f = open('w', 'output.htm')
+
+    newitems = []
+    for article in outputdict[category]:
+        for term in searchterms:
+            if term in article['text']:
+                newitems.append(article)
+                break
     return newitems
 #pprint.pprint(getlinks())
 #pprint.pprint(getrssfeeds(getlinks()))
