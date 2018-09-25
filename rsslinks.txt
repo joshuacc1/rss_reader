@@ -15,6 +15,12 @@ department of state,https://www.state.gov/rss/channels/fs.xml
 department of state,https://www.state.gov/rss/channels/sanctions.xml
 department of state,https://www.state.gov/rss/channels/secremarks.xml
 department of state,https://www.state.gov/rss/channels/press.xml
+department of labor,https://www.dol.gov/rss/releases.xml
+nasa,https://www.nasa.gov/rss/dyn/breaking_news.rss
+nasa,https://www.jpl.nasa.gov/multimedia/rss/news.xml
+fbi,https://www.fbi.gov/feeds/fbi-in-the-news/rss.xml
+doj,https://www.justice.gov/feeds/opa/justice-news.xml
+doj,https://www.justice.gov/osg/supreme-court-briefs/feed
 congress,https://www.congress.gov/rss/most-viewed-bills.xml
 congress,https://www.congress.gov/rss/presented-to-president.xml
 congress,https://www.congress.gov/rss/senate-floor-today.xml

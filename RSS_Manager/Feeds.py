@@ -40,6 +40,10 @@ class feeds():
         for cat in self.feeds:
             filterfeedlist = [x for x in self.feeds if filterkey in x['entry']['title']]
 
+    def getcategories(self):
+        return self.feeds.keys()
+
+
 if __name__ == "__main__":
     from RSS_Manager import Source
     urls = Source.RSS_URL_Management()
