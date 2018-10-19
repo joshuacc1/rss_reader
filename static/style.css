@@ -1,0 +1,28 @@
+.listingtable {
+    width:100%;
+    background: #e2e2e2;
+    border: 1px solid black;
+}
+
+a {
+    color: white;
+}
+
+.section {
+    background: lightslategrey;
+}
+
+.category {text-align: center;font-size: 300%;}
+
+.title {
+    font-size: 150%;
+    background: darkslategrey;
+    border: 2px solid black;
+    text-align: center;
+}
+
+th {
+    width:100%;
+    font-size:300%;
+    text-align=center;
+}

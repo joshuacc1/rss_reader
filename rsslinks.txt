@@ -2,7 +2,6 @@ technology,https://www.wired.com/feed/category/ideas/latest/rss
 science,https://www.wired.com/feed/category/science/latest/rss
 technology,https://www.wired.com/feed/rss
 politics,http://rss.nytimes.com/services/xml/rss/nyt/Politics.xml
-politics,https://www.reddit.com/r/politics/.rss
 politics,https://www.thegatewaypundit.com/feed/
 politics,http://michellemalkin.com/feed/
 white house,https://obamawhitehouse.archives.gov/sites/default/files/omb/rss/ombsaps.xml
@@ -28,3 +27,7 @@ congress,https://www.congress.gov/rss/house-floor-today.xml
 congress,https://www.congress.gov/rss/notification.xml
 science,http://rsos.royalsocietypublishing.org/rss/Physics.xml
 science,http://rsos.royalsocietypublishing.org/rss/Earth_science.xml
+politics,https://fivethirtyeight.com/politics/feed/
+economics,https://fivethirtyeight.com/economics/feed/
+science,https://fivethirtyeight.com/science/feed/
+politics,https://fivethirtyeight.com/contributors/nate-silver/feed/
