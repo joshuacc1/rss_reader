@@ -5,18 +5,20 @@
 }
 
 a {
-    color: white;
+    color: #fdfdfd;
+    text-decoration: unset;
+    font-weight:bold;
 }
 
 .section {
-    background: lightslategrey;
+    background: #48c51f;
 }
 
 .category {text-align: center;font-size: 300%;}
 
 .title {
     font-size: 150%;
-    background: darkslategrey;
+    background: #1a6d0a;
     border: 2px solid black;
     text-align: center;
 }

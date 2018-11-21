@@ -1,15 +1,33 @@
 import RSS_Manager.Source
 import feedparser
 
+
+
 class feed():
-    def __init__(self, url, category):
+    def __init__(self, url, category = None, getfeed = True):
         self.url = url
         self.category = category
         self.tags = []
         self.content = {}
+        self.nltk = None
+
+        if getfeed:
+            self.getfeed()
 
     def getfeed(self):
         self.content = feedparser.parse(self.url)
+        if self.category:
+            for entry in self.content['entries']:
+                entry['acategory'] = self.category
+
+    def gettitles(self):
+        return [t['title'] for t in self.content['entries']]
+
+    def getsummaries(self):
+        return [t['summary'] for t in self.content['entries']]
+
+    def getenteries(self):
+        return [t for t in self.content['entries']]
 
     def getvalue(self,key):
         return self.content[key]

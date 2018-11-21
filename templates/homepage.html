@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+
+</head>
+<body>
+<H1>Manage Links</H1>
+<a href="http://10.109.12.172:5000/linksmanagement">http://10.109.12.172:5000/linksmanagement</a>
+<H1>Show all rss feeds</H1>
+<a href="http://10.109.12.172:5000/all">http://10.109.12.172:5000/all</a>
+<H1>Show a category</H1>
+<a href="http://10.109.12.172:5000/category/politics">http://10.109.12.172:5000/politics</a>
+<H1>Filter by summary</H1>
+<a href="http://10.109.12.172:5000/category/science?summaryflag=True&authorflag=False&filterkey=title&filtervalue=Facebook">http://10.109.12.172:5000/category/science?summaryflag=True&authorflag=False&filterkey=title&filtervalue=Facebook</a>
+
+<H1>RSS Database</H1>
+{% for category in urls%}
+    <H3><a href={{"http://10.109.12.172:5000/category/" + category|replace(" ","%20")}}>{{ category }}</a></H3>
+        {% for link in urls[category] %}
+        <div><a href={{link}}>{{ link }}</a></div>
+        {% endfor %}
+{% endfor %}
+
+</body>
+</html>

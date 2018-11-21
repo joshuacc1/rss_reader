@@ -14,8 +14,12 @@
         {% for rssfeed in data[category] %}
         <div class="title"><a href={{ rssfeed.link }}>{{ rssfeed.title }}</a></div>
         <table class="listingtable">
-        <tr><td>{{ rssfeed.summary|safe }}</td></tr>
-        <tr><td>{{ rssfeed.author }}</td></tr>
+            {% if rssfeed.summary %}
+            <tr><td>{{ rssfeed.summary|safe }}</td></tr>
+            {% endif %}
+            {% if rssfeed.author %}
+            <tr><td>{{ rssfeed.author }}</td></tr>
+            {% endif %}
         </table>
         {% endfor %}
 
