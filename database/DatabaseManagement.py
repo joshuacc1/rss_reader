@@ -56,7 +56,9 @@ class feedsmanagement:
     def addfeed(self, feed):
         with self.database as db:
             for entry in feed['entries']:
+                entry['source'] = feed['feed']
                 if 'author' in entry and 'title' in entry:
+
                     status = db.update({'id': entry['id'],
                                         'author': entry['author'],
                                        'title': entry['title']},
@@ -64,11 +66,10 @@ class feedsmanagement:
                                         True)
                     print(status)
 
-
     def getfeeds(self, category=None):
         _filter = {}
         if category:
-            _filter['category'] = category
+            _filter['acategory'] = category
         with self.database as db:
             return [x for x in db.find(_filter)]
 

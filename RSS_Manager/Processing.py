@@ -9,13 +9,14 @@ from nltk.chunk.regexp import ChunkRule, ExpandLeftRule, ExpandRightRule, UnChun
 from nltk.chunk import RegexpChunkParser
 from sklearn.feature_extraction.text import CountVectorizer
 import json
-#from database import DatabaseManagement
-
+from database import DatabaseManagement
+import collections
 import pprint
 
 class RSSNLTK:
     def __init__(self):
-        self.texts = {'titles': [], 'summaries': [], 'htmltexts': []}
+        self.datatags = {'link': '', 'title': '', 'summary': '', 'htmltext': '','author': ''}
+        self.texts = []
         self.links = []
         self.content = []
         self.rsslink = None
@@ -25,68 +26,94 @@ class RSSNLTK:
 
     def savetojson(self, filename):
         with open(filename, 'w') as f:
-            json.dump(self.texts)
+            json.dump(self.texts,f)
 
     def loadjson(self, filename):
         with open(filename) as f:
             self.texts = json.load(f)
 
-    def initializeRSS(self, rsslink):
-        self.rsslink = rsslink
-        self.feedparser = feedparser.parse(rsslink)
-        for entry in self.feedparser.entries:
-            self.texts['titles'].append(entry['title'])
-            if entry['summary']: self.texts['summaries'].append(entry['summary'])
-            if not entry.link in self.links: self.links.append(entry.link)
+    def getdata(self, rsslink = '', jsonfilename = ''):
+        if rsslink:
+            self.rsslink = rsslink
+            self.feedparser = feedparser.parse(rsslink)
+            source = self.feedparser
+            self.initializeRSS(source['entries'])
+            self.getHTMLlinktext()
+            if jsonfilename:
+                self.savetojson(jsonfilename)
+        elif jsonfilename:
+            self.loadjson(jsonfilename)
+        else:
+            datalink = DatabaseManagement.feedsmanagement()
+            source = datalink.getfeeds()
+            self.initializeRSS(source)
 
-    def initRSSdatabase(self):
-        datalink = DatabaseManagement.feedsmanagement()
-        for entry in datalink.getfeeds():
-            self.texts['titles'].append(entry['title'])
-            if entry['summary']: self.texts['summaries'].append(entry['summary'])
-            if not entry['link'] in self.links: self.links.append(entry['link'])
-            if 'htmltext' in entry and entry['htmltext']: self.texts['htmltexts'].append(entry['htmltext'])
 
+    def initializeRSS(self, source):
+        for entry in source:
+            text = self.datatags.copy()
+            text['title'] = entry['title']
+            if entry['summary']: text['summary'] = entry['summary']
+            if entry['link']: text['link'] = entry['link']
+            if entry.get('author'): text['author'] = entry['author']
+            if entry.get('htmltext'): text['htmltext'] = entry['htmltext']
+            self.texts.append(text)
 
     def getHTMLlinktext(self, sensitivity = 5):
-        for link in self.links:
-            response = request('GET', link)
+        for text in self.texts:
+            response = request('GET', text['link'])
             soup = BeautifulSoup(response.content)
             htmltext = soup.find_all(text=True)
             visibletext = filter(self.tag_visible,htmltext)
             cleantexts = [text for text in visibletext if len(text.split(' ')) > sensitivity]
             mergedtext = ' '.join(cleantexts)
-            self.texts['htmltexts'].append(mergedtext)
+            text['htmltext'] = mergedtext
+
+    def getHTMLtext(self, link, sensitivity = 5):
+        response = request('GET', link)
+        soup = BeautifulSoup(response.content)
+        htmltext = soup.find_all(text=True)
+        visibletext = filter(self.tag_visible,htmltext)
+        cleantexts = [text for text in visibletext if len(text.split(' ')) > sensitivity]
+        mergedtext = ' '.join(cleantexts)
+        return mergedtext
 
     def tokenizetext(self):
-        tokentexts = {}
+        tokentexts = []
+        datatags = self.datatags
 
-        for src in self.texts:
-            tokentexts[src] = []
-
-        for src in self.texts:
-            for text in self.texts[src]:
-                tokentexts[src].append(word_tokenize(text))
+        for text in self.texts:
+            tokeneditem = self.datatags.copy()
+            for datatag in datatags:
+                try:
+                    tokeneditem[datatag] = word_tokenize(text[datatag])
+                except:
+                    tokeneditem[datatag] = [text[datatag]]
+            tokentexts.append(tokeneditem)
 
         self.tokentext = tokentexts
         return tokentexts
 
     def senttokenizetext(self):
-        senttokentexts = {}
+        tokentexts = []
+        datatags = self.datatags
 
-        for src in self.texts:
-            senttokentexts[src] = []
+        for text in self.texts:
+            tokeneditem = self.datatags.copy()
+            for datatag in datatags:
+                try:
+                    tokeneditem[datatag] = sent_tokenize(text[datatag])
+                except:
+                    tokeneditem[datatag] = [text[datatag]]
+            tokentexts.append(tokeneditem)
 
-        for src in self.texts:
-            for text in self.texts[src]:
-                senttokentexts[src].append(sent_tokenize(text))
-
-        self.senttokenizedtext = senttokentexts
-        return senttokentexts
+        self.senttokenizedtext = tokentexts
+        return tokentexts
 
     def textconcordance(self,word,textsname):
         if self.tokentext:
-            for text in self.tokentext[textsname]:
+            for item in self.tokentext:
+                text = item[textsname]
                 yield self.getconcordance(word,text)
 
     def getconcordance(self,word,text):
@@ -96,7 +123,8 @@ class RSSNLTK:
                         return match.line
     def textsimiliar(self, word, textsname):
         if self.tokentext:
-            for text in self.tokentext[textsname]:
+            for item in self.tokentext:
+                text = item[textsname]
                 yield self.getsimiliar(word,text)
 
     def getsimiliar(self,word, text):
@@ -122,7 +150,7 @@ class RSSNLTK:
 
     def getallnouns(self):
         words = {}
-        for text in self.tokentext['htmltexts']:
+        for text in [x['htmltext'] for x in self.tokentext]:
             postag =  pos_tag(text)
             for i in postag:
                 if not i[0] in words:
@@ -150,7 +178,8 @@ class RSSNLTK:
                     maxcount = words[i[0]]['count']
 
         for word in words:
-            words[word]['count'] = words[word]['count']/maxcount
+            if maxcount > 0:
+                words[word]['count'] = words[word]['count']/maxcount
 
         words = sorted(words.values(), key=lambda x: x['count'])
         words = {x['word']: x for x in words}
@@ -163,26 +192,23 @@ class RSSNLTK:
         senttk = sent_tokenize(text)
         scoredsentences = []
         for sent in senttk:
-            sentscore = 0
-            for word in word_tokenize(sent):
-                sentscore += words[word]['count']
+            senttk = word_tokenize(sent)
+            sentscore = sum(self.tokenscoreiter(senttk,words))
             scoredsentences.append({'sentence': sent, 'score': sentscore})
-
-        #csenttks = [{'sentence': x, 'count': 1} for x in senttks]
-
-        # for senttk in senttks:
-        #     tscore = 0
-        #     for word in word_tokenize(senttk):
-        #         tscore += words[word]
-
         return scoredsentences
+
+    def tokenscoreiter(self, tokens, wordscores):
+        for token in tokens:
+            if token in wordscores:
+                yield wordscores[token]['count']
 
     def summarizetexts(self,texttype):
         textsummaries = []
-        for text in self.texts[texttype]:
+        for text in [x[texttype] for x in self.texts]:
             counts = self.scoresentences(text)
             scounts = sorted(counts, key=self.filtercount)
-            print(scounts[-1])
+            if scounts:
+                print(scounts[-1])
 
     def filtercount(self,word):
         return word['score']
@@ -196,10 +222,12 @@ class RSSNLTK:
 
 if __name__ == "__main__":
     rssproc = RSSNLTK()
-    rssproc.loadjson('junk.json')
+    #rssproc.initRSSdatabase()
+    #rssproc.getdata(rsslink='http://feeds.foxnews.com/foxnews/politics', jsonfilename = 'foxnews.json')
+    rssproc.getdata()
     rssproc.tokenizetext()
     rssproc.senttokenizetext()
-    rssproc.summarizetexts('htmltexts')
+    rssproc.summarizetexts('htmltext')
 
     # filcounts = filter(rssproc.filtercount,counts.values())
     # highestcount = [x for x in filcounts][-1]['count']
@@ -210,7 +238,7 @@ if __name__ == "__main__":
     #     item['count'] = item['count']/highestcount
     #     filweights[x['word']] = item
     # print([x for x in filweights.values()])
-    senttokens = rssproc.senttokenizedtext['htmltexts'][10]
+    senttokens = rssproc.senttokenizedtext[1]['htmltext']
 
     s = 'there are 12 boxes in the closet'
 
@@ -238,9 +266,9 @@ if __name__ == "__main__":
         pass
 
 
-    for match in rssproc.textconcordance("election", "summaries"):
+    for match in rssproc.textconcordance("Russia", "htmltext"):
         if match:
          print(match)
-    for match in rssproc.textsimiliar("Peloci","htmltexts"):
+    for match in rssproc.textsimiliar("Manafort","htmltext"):
         if match:
             print(match)

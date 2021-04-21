@@ -4,6 +4,7 @@ import RSS_Manager.Source as src
 import RSS_Manager.Feeds as fd
 from database.DatabaseManagement import datalink
 from database.DatabaseManagement import linksmanagement as lm
+from database.DatabaseManagement import feedsmanagement as fm
 import datetime
 
 base_url = r"http://127.0.0.1:5000/"
@@ -75,7 +76,8 @@ def getcategory(data=None, category=None, filterterm=None):
                          filtervalue=request.args.get('filtervalue'),
                          selectcategory=category,
                          summaryflag=stringtobool(request.args.get('summaryflag')),
-                         authorflag=stringtobool(request.args.get('authorflag')))
+                         authorflag=stringtobool(request.args.get('authorflag')),
+                         urlsummaryflag=stringtobool(request.args.get('urlsummaryflag')))
     return render_template('testhtml.html', data=rssdata)
 
 @app.route('/category/<category>/<filterkey>')
@@ -86,68 +88,56 @@ def getcategoryfiltered(data=None, category=None, filterterm=None):
     rssdata = getrssdata(filterkey=request.args.get('filterkey'),selectcategory=category, summaryflag=request.args.get('summaryflag'))
     return render_template('testhtml.html',  data=rssdata)
 
-def getrssdata(filterkey=None, filtervalue=None,selectcategory=None, summaryflag=True, authorflag=True):
-    urls = src.RSS_URL_Management()
+def getrssdata(filterkey=None,urlsummaryflag=None,filtervalue=None,selectcategory=None, summaryflag=True, authorflag=True):
+    # urls = src.RSS_URL_Management()
     if not filtervalue:
         filterkey = 'summary'
-    with datalink('rssdata','rsslinks') as mydata:
-        for record in mydata.find({}):
-            urls.addurl(record['category'],record['link'].replace(r'\n',''))
-
-    myfeeds = fd.feeds()
-    for category in urls.getcategories():
-        [myfeeds.addfeed(fd.feed(url,category)) for url in urls.geturls(category)]
+    # with datalink('rssdata','rsslinks') as mydata:
+    #     for record in mydata.find({}):
+    #         urls.addurl(record['category'],record['link'].replace(r'\n',''))
+    #
+    # myfeeds = fd.feeds()
+    # for category in urls.getcategories():
+    #     [myfeeds.addfeed(fd.feed(url,category)) for url in urls.geturls(category)]
     datadict = {}
+    #
+    # datadict[selectcategory] = {}
+    # for feed in myfeeds.getfeeds(selectcategory):
+    #     feed.getfeed()
+    #     link = feed.url
+    #
+    #     datadict[selectcategory][link] = []
+    #     try:
+    #         for entry in feed.getvalue('entries'):
 
-    if selectcategory:
-        if selectcategory in myfeeds.getcategories():
-            datadict[selectcategory] = []
-            for feed in myfeeds.getfeeds(selectcategory):
-                feed.getfeed()
-                try:
-                    for entry in feed.getvalue('entries'):
-                        newfeed = {}
-                        if filtervalue is None or filtervalue in entry[filterkey]:
-                            pubtime = datetime.datetime(*entry['published_parsed'][0:7])
-                            if pubtime > (datetime.datetime.today() - datetime.timedelta(2)):
-                                newfeed['source'] = feed.content['feed']['title']
-                                newfeed['link'] = entry['link']
-                                newfeed['title'] = entry['title']
-                                newfeed['time'] = entry.get('published')
-                                if summaryflag:
-                                    if 'summary' in entry:
-                                        newfeed['summary'] = entry['summary']
-                                if authorflag:
-                                    if 'author' in entry:
-                                        newfeed['author'] = entry['author']
-                                datadict[selectcategory].append(newfeed)
-                except:
-                    pass
-
-    else:
-        for category in myfeeds.getcategories():
-            datadict[category] = []
-            for feed in myfeeds.getfeeds(category):
-                feed.getfeed()
-                try:
-                    for entry in feed.getvalue('entries'):
-                        newfeed = {}
-                        if filtervalue is None or filtervalue in entry[filterkey]:
-                            pubtime = datetime.datetime(*entry['published_parsed'][0:7])
-                            if pubtime > (datetime.datetime.today() - datetime.timedelta(2)):
-                                newfeed['source'] = feed.content['feed']['title']
-                                newfeed['link'] = entry['link']
-                                newfeed['title'] = entry['title']
-                                newfeed['time'] = entry.get('published')
-                                if summaryflag:
-                                    if 'summary' in entry:
-                                        newfeed['summary'] = entry['summary']
-                                if authorflag:
-                                    if 'author' in entry:
-                                        newfeed['author'] = entry['author']
-                                datadict[selectcategory].append(newfeed)
-                except:
-                    pass
+    entries = fm()
+    for entry in entries.getfeeds(category=selectcategory):
+        try:
+            if not entry['acategory'] in datadict:
+                datadict[entry['acategory']] = {}
+            newfeed = {}
+            if filtervalue is None or filtervalue in entry[filterkey]:
+                pubtime = datetime.datetime(*entry['published_parsed'][0:7])
+                if pubtime > (datetime.datetime.today() - datetime.timedelta(1)):
+                    link = entry['source']['title']
+                    newfeed['source'] = entry['source']['title']
+                    newfeed['link'] = entry['link']
+                    newfeed['title'] = entry['title']
+                    newfeed['time'] = entry.get('published')
+                    if urlsummaryflag:
+                        if 'urltextsummary' in entry:
+                            newfeed['urltextsummary']=entry['urltextsummary']
+                    if summaryflag:
+                        if 'summary' in entry:
+                            newfeed['summary'] = entry['summary']
+                    if authorflag:
+                        if 'author' in entry:
+                            newfeed['author'] = entry['author']
+                    if link not in datadict[selectcategory]:
+                        datadict[selectcategory][link] = []
+                    datadict[selectcategory][link].append(newfeed)
+        except:
+            pass
 
 
     return datadict
@@ -155,7 +145,15 @@ def getrssdata(filterkey=None, filtervalue=None,selectcategory=None, summaryflag
 with app.test_request_context():
     print(url_for('static', filename='style.css'))
     print(url_for('getcategory', category='technology'))
-    print(getrssdata(selectcategory="politics"))
+    data = getrssdata(selectcategory="politics")
+    for source in data:
+        print(source)
+        for link in data[source]:
+            print(link)
+            for entry in data[source][link]:
+                print(entry)
+
+
 
 
 @app.route('/hello')

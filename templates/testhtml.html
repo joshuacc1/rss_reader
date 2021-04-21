@@ -11,16 +11,25 @@
 
     <div class="section"><div class="category">{{ category }}</div>
 
-        {% for rssfeed in data[category] %}
-        <div class="title"><a href={{ rssfeed.link }}>{{ rssfeed.title }}</a></div>
-        <table class="listingtable">
-            {% if rssfeed.summary %}
-            <tr><td>{{ rssfeed.summary|safe }}</td></tr>
-            {% endif %}
-            {% if rssfeed.author %}
-            <tr><td>{{ rssfeed.author }}</td></tr>
-            {% endif %}
-        </table>
+        {% for alink in data[category] %}
+        <div class="source">{{ alink }}</div>
+            {% for rssfeed in data[category][alink] %}
+
+                <div class="title"><a href={{ rssfeed.link }}>{{ rssfeed.title }}</a></div>
+                <table class="listingtable">
+                    {% if rssfeed.summary %}
+                    <tr><td>{{ rssfeed.summary|safe }}</td></tr>
+                    {% endif %}
+                    {% if rssfeed.author %}
+                    <tr><td>{{ rssfeed.author }}</td></tr>
+                    {% endif %}
+                    {% if rssfeed.urltextsummary %}
+                        {% for textsummary in rssfeed.urltextsummary %}
+                        <tr><td>{{ textsummary }}</td></tr>
+                        {% endfor %}
+                    {% endif %}
+                </table>
+            {% endfor %}
         {% endfor %}
 
     </div>
